@@ -2,20 +2,22 @@ use std::env;
 use std::ptr::null_mut;
 use std::os::raw::c_char;
 use std::ffi::c_void;
+use std::ffi::CString;
 
 extern "C" fn lcore_hello(_: *mut c_void) -> i32 {
     unsafe {
-        print!("hello from core {}\n", dpdk_sys::rte_lcore_id());
+        println!("hello from core {}", dpdk_sys::rte_lcore_id());
     }
     0
 }
 
 fn main() {
     println!("Hello, Rust DPDK!");
-    let mut args: Vec<_> = env::args().map(|s| s.as_ptr() as *mut c_char).collect();
+    let args: Vec<_> = env::args().map(|s| CString::new(s).unwrap()).collect();
+    let mut cargs: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
 
     unsafe {
-        let ret = dpdk_sys::rte_eal_init(args.len() as i32, args.as_mut_ptr());
+        let ret = dpdk_sys::rte_eal_init(cargs.len() as i32, cargs.as_mut_ptr());
         if ret < 0 {
             panic!("Cannot init EAL\n");
         }
