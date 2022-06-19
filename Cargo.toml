@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust-dpdk-sys = { git = "https://github.com/ANLAB-KAIST/rust-dpdk.git", rev = "99d69ba2124ff1b499418cfbcfeeb0d15e198063" }
+rust-dpdk-sys = { path = "./rust-dpdk/dpdk-sys/" }
