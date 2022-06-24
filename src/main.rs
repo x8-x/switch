@@ -23,13 +23,15 @@ fn main() {
             panic!("Cannot init EAL\n");
         }
 
-        // vfioドライバ呼び出すのに必要、、、
+        // 仮対応
         dpdk_sys::output_test_log();
+        dpdk_sys::load_rte_eth_tap();
 
         let avail_port_num = dpdk_sys::rte_eth_dev_count_avail();
         if avail_port_num <= 0 {
             panic!("Cannot avail device\n");
         }
+        println!("{}", avail_port_num);
 
         // allocate pktmbuf
         let cstr_mbuf_pool = CString::new("mbuf_pool").unwrap();
@@ -76,7 +78,19 @@ fn main() {
             lcore_id = dpdk_sys::rte_get_next_lcore(lcore_id, 1, 0);
         }
 
+        // main core process
         lcore_hello(null_mut());
+        let mut pkts: [*mut dpdk_sys::rte_mbuf; 32] = [null_mut(); 32];
+        while true {
+            let tap_rx = dpdk_sys::rte_eth_rx_burst(0, 0, pkts.as_ptr() as *mut *mut dpdk_sys::rte_mbuf, 32);
+            if tap_rx <= 0 {
+                continue;
+            }
+            println!("recv: {}", tap_rx);
+            let tap_tx = dpdk_sys::rte_eth_tx_burst(1, 0, pkts.as_ptr() as *mut *mut dpdk_sys::rte_mbuf, tap_rx);
+            println!("send: {}", tap_tx);
+        }
+
         dpdk_sys::rte_eal_mp_wait_lcore();
         dpdk_sys::rte_eal_cleanup();
     }
